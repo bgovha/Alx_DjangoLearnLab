@@ -15,3 +15,5 @@ class Book(models.Model):
         verbose_name="Publication Year",
         help_text="Enter the year the book was published"
     )
+def __str__(self):
+        return f"{self.title} by {self.author} ({self.publication_year})"
