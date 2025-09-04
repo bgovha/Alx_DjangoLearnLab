@@ -1,9 +1,9 @@
 from myapp.models import Book
 
 new_book = Book.objects.create(
-    title="The Great Gatsby",
-    author="F. Scott Fitzgerald",
-    publication_year=1925
+    title="1984",
+    author="George Orwell",
+    publication_year=1949
 )
 
 print(f"Created book: {new_book}")
