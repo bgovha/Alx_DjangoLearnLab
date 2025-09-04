@@ -8,3 +8,6 @@ new_book = Book.objects.create(
 
 print(f"Created book: {new_book}")
 print(f"Book ID: {new_book.id}")
+
+book_count = Book.objects.count()
+print(f"Total books in database: {book_count}")
