@@ -1,31 +1,32 @@
 from django.urls import path
 from . import views
-from .views import list_books
 from django.contrib import admin
-from django.contrib.auth import views as auth_views
-from django.urls import path, include
+from django.contrib.auth.views import LoginView, LogoutView
 
 
 app_name = 'relationship_app'
 
 urlpatterns = [
+    # Admin site
     path('admin/', admin.site.urls),
-    path('relationship/', include('relationship_app.urls')),
-    # Function-based view URL
-    path('books/', views.list_books, name='list_books'),
-    path('login/', LoginView.as_view(template_name='registration/login.html'), name='login'),
-    path('logout/', LogoutView.as_view(template_name='registration/logged_out.html'), name='logout'),
-    # Class-based view URL
-    path('library/<int:pk>/', views.LibraryDetailView.as_view(), name='library_detail'),
-    path('login/', views.register.login_view, name='login'),
-    path('logout/', views.register.logout_view, name='logout'),
+
+    # Authentication
+    path('login/', views.login_view, name='login'),
+    path('logout/', views.logout_view, name='logout'),
     path('register/', views.RegisterView.as_view(), name='register'),
 
-    path('admin/', views.admin_view, name='admin_view'),
+    # Book views
+    path('books/', views.list_books, name='list_books'),
+    path('books/manage/', views.book_list, name='book_list'),
+    path('books/add/', views.add_book, name='add_book'),
+    path('books/edit/<int:pk>/', views.edit_book, name='edit_book'),
+    path('books/delete/<int:pk>/', views.delete_book, name='delete_book'),
+
+    # Library views
+    path('library/<int:pk>/', views.LibraryDetailView.as_view(), name='library_detail'),
+
+    # Role-based views
+    path('admin_view/', views.admin_view, name='admin_view'),
     path('librarian/', views.librarian_view, name='librarian_view'),
     path('member/', views.member_view, name='member_view'),
-    path('books/manage/', views.book_list, name='book_list'),
-    path('books/add/', views.add_book, name=' add_book '),
-    path('books/edit/<int:pk>/', views.edit_book, name=' edit_book '),
-    path('books/delete/<int:pk>/', views.delete_book, name='delete_book'),
 ]
