@@ -1,13 +1,16 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from django.views.generic.detail import DetailView
-from django.views.generic import ListView, DetailView, CreateView
-from .models import Library , Book
+from django.views.generic import DetailView, CreateView
+from .models import Library, Book, UserProfile
 from django.contrib.auth import login, logout, authenticate
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django import forms
+from django.contrib.auth.models import User
+from .decorators import admin_required, librarian_required, member_required
+from django.utils.decorators import method_decorator
 
 # Function-based view to list all books
 def list_books(request):
@@ -24,7 +27,6 @@ class LibraryDetailView(LoginRequiredMixin, DetailView):
     def get_object(self):
         return get_object_or_404(Library, pk=self.kwargs['pk'])
 @login_required(login_url='relationship_app:login')
-
 def list_books(request):
     books = Book.objects.all().select_related('author')
     libraries = Library.objects.all()
@@ -59,11 +61,31 @@ def logout_view(request):
     return render(request, 'relationship_app/logout.html')
 
 class RegisterView(CreateView):
-    form_class = UserCreationForm()
+    form_class = UserRegisterForm
     template_name = 'relationship_app/register.html'
     success_url = reverse_lazy('relationship_app:login')
     
     def form_valid(self, form):
         response = super().form_valid(form)
+        user = form.instance
+        role = form.cleaned_data.get('role')
+        user.profile.role = role
+        user.profile.save()
         messages.success(self.request, 'Registration successful! Please log in.')
-        return response
+        return response   
+
+# Role-based views
+@login_required
+@admin_required
+def admin_view(request):
+    return render(request, 'relationship_app/admin_view.html')
+
+@login_required
+@librarian_required
+def librarian_view(request):
+    return render(request, 'relationship_app/librarian_view.html')
+
+@login_required
+@member_required
+def member_view(request):
+    return render(request, 'relationship_app/member_view.html')
