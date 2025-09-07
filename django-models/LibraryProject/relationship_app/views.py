@@ -10,21 +10,33 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.views.generic import CreateView
 from django.urls import reverse_lazy
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 # Function-based view to list all books
 def list_books(request):
     books = Book.objects.all().select_related('author')
-    return render(request, 'relationship_app/list_books.html', {'books': books})
+    return render(request, 'relationship_app/templates/list_books.html', {'books': books})
 
 # Class-based view to display library details
-class LibraryDetailView(DetailView):
+class LibraryDetailView(LoginRequiredMixin, DetailView):
     model = Library
-    template_name = 'relationship_app/library_detail.html'
+    template_name = 'relationship_app/templates/library_detail.html'
     context_object_name = 'library'
+    login_url = 'relationship_app:login'
 
     def get_object(self):
         return get_object_or_404(Library, pk=self.kwargs['pk'])
-    # Authentication Views
+@login_required(login_url='relationship_app:login')
+
+def list_books(request):
+    books = Book.objects.all().select_related('author')
+    libraries = Library.objects.all()
+    return render(request, 'relationship_app/list_books.html', {
+        'books': books,
+        'libraries': libraries
+    })
+
+# Authentication Views
 def login_view(request):
     if request.method == 'POST':
         form = AuthenticationForm(request, data=request.POST)
