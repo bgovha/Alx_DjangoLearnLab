@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.contrib.auth.forms import UserCreationForm
 from django.views.generic.detail import DetailView
 from django.shortcuts import render, get_object_or_404
 from django.views.generic import ListView, DetailView
