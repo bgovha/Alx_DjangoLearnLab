@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Librarian Dashboard</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+
+<body>
+    <nav>
+        <a href="{% url 'relationship_app:list_books' %}">Books</a> |
+        <a href="{% url 'relationship_app:logout' %}">Logout</a>
+    </nav>
+
+    <h1>Librarian Dashboard</h1>
+    <p>Welcome, {{ user.username }} ({{ user.profile.get_role_display }})!</p>
+
+    <h2>Librarian Privileges:</h2>
+    <ul>
+        <li>Manage book inventory</li>
+        <li>Process book checkouts and returns</li>
+        <li>Assist library members</li>
+        <li>Maintain library organization</li>
+    </ul>
+
+    <h2>Quick Actions:</h2>
+    <ul>
+        <li><a href="{% url 'relationship_app:list_books' %}">View All Books</a></li>
+        <li><a href="#">Checkout Books</a></li>
+        <li><a href="#">Manage Inventory</a></li>
+    </ul>
+</body>
+
+</html>
