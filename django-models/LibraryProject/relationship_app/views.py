@@ -11,7 +11,7 @@ from django import forms
 from .models import Library, Book, UserProfile
 from .forms import BookForm
 from .decorators import admin_required, librarian_required, member_required
-
+from django.contrib.auth.decorators import permission_required
 # --- Utility Functions ---
 
 def is_admin(user):
