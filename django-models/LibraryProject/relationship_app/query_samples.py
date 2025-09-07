@@ -40,7 +40,7 @@ def query_all_books_by_author(author_name):
     """Query all books by a specific author"""
     try:
         #author = Author.objects.get(name=author_name)
-        author = Author.objects.filter(author=author_name).first()
+        author = Author.objects.filter(author=author).first()
         books = author.books.all()
         print(f"Books by {author_name}:")
         for book in books:
