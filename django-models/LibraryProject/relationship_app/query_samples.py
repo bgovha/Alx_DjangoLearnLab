@@ -39,7 +39,8 @@ def create_sample_data():
 def query_all_books_by_author(author_name):
     """Query all books by a specific author"""
     try:
-        author = Author.objects.get(name=author_name)
+        #author = Author.objects.get(name=author_name)
+        author = Author.objects.filter(name=author_name).first()
         books = author.books.all()
         print(f"Books by {author_name}:")
         for book in books:
