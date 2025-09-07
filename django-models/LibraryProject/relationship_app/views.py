@@ -11,6 +11,7 @@ from django import forms
 from django.contrib.auth.models import User
 from .decorators import admin_required, librarian_required, member_required
 from django.utils.decorators import method_decorator
+from django.contrib.auth.decorators import user_passes_test
 
 # Function-based view to list all books
 def list_books(request):
@@ -60,6 +61,18 @@ def logout_view(request):
     messages.success(request, 'You have been successfully logged out.')
     return render(request, 'relationship_app/logout.html')
 
+class UserRegisterForm(UserCreationForm):
+    ROLE_CHOICES = (
+        ('admin', 'Admin'),
+        ('librarian', 'Librarian'),
+        ('member', 'Member'),
+    )
+    role = forms.ChoiceField(choices=ROLE_CHOICES, required=True)
+
+    class Meta:
+        model = User
+        fields = ('username', 'password1', 'password2', 'role')
+
 class RegisterView(CreateView):
     form_class = UserRegisterForm
     template_name = 'relationship_app/register.html'
@@ -73,7 +86,6 @@ class RegisterView(CreateView):
         user.profile.save()
         messages.success(self.request, 'Registration successful! Please log in.')
         return response   
-
 # Role-based views
 @login_required
 @admin_required
@@ -89,3 +101,10 @@ def librarian_view(request):
 @member_required
 def member_view(request):
     return render(request, 'relationship_app/member_view.html')
+
+def is_admin(user):
+    return hasattr(user, 'profile') and user.profile.role == 'admin'
+
+@user_passes_test(is_admin, login_url='relationship_app:login')
+def admin_only_view(request):
+    return render(request, 'relationship_app/admin_only.html')
