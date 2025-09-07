@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Library Detail</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+
+<body>
+    <div style="float: right;">
+        {% if user.is_authenticated %}
+        Welcome, {{ user.username }}! |
+        <a href="{% url 'relationship_app:logout' %}">Logout</a>
+        {% else %}
+        <a href="{% url 'relationship_app:login' %}">Login</a> |
+        <a href="{% url 'relationship_app:register' %}">Register</a>
+        {% endif %}
+    </div>
+
+    <h1>Library: {{ library.name }}</h1>
+    <h2>Books in Library:</h2>
+    <ul>
+        {% for book in library.books.all %}
+        <li>{{ book.title }} by {{ book.author.name }}</li>
+        {% endfor %}
+    </ul>
+    <a href="{% url 'relationship_app:list_books' %}">Back to all books</a>
+</body>
+
+</html>
