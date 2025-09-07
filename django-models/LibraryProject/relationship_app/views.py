@@ -2,15 +2,12 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User, Group
-from django.contrib.auth.decorators import (
-    login_required, permission_required, user_passes_test
-)
+from django.contrib.auth.decorators import login_required, permission_required, user_passes_test
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import DetailView, CreateView
 from django.urls import reverse_lazy
 from django.contrib import messages
 from django import forms
-
 from .models import Library, Book, UserProfile
 from .forms import BookForm
 from .decorators import admin_required, librarian_required, member_required
