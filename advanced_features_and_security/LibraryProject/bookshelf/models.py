@@ -1,4 +1,6 @@
 from django.db import models
+from django.contrib.auth.models import AbstractUser, BaseUserManager
+from django.utils.translation import gettext_lazy as _
 
 class Book(models.Model):
     title = models.CharField(
@@ -15,10 +17,13 @@ class Book(models.Model):
         verbose_name="Publication Year",
         help_text="Enter the year the book was published"
     )
-    use_in_migrations = True
 
     def __str__(self):
         return f"{self.title} by {self.author} ({self.publication_year})"
+
+class CustomUserManager(BaseUserManager):
+    """Define a model manager for User model with no username field."""
+    use_in_migrations = True
 
     def _create_user(self, email, password, **extra_fields):
         """Create and save a User with the given email and password."""
@@ -47,3 +52,22 @@ class Book(models.Model):
             raise ValueError('Superuser must have is_superuser=True.')
 
         return self._create_user(email, password, **extra_fields)
+
+class CustomUser(AbstractUser):
+    username = None
+    email = models.EmailField(_('email address'), unique=True)
+    date_of_birth = models.DateField(_('date of birth'), null=True, blank=True)
+    profile_photo = models.ImageField(
+        _('profile photo'),
+        upload_to='profile_photos/',
+        null=True,
+        blank=True
+    )
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = []
+
+    objects = CustomUserManager()
+
+    def __str__(self):
+        return self.email
