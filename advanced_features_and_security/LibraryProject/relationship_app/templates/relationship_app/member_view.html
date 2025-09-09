@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Member Dashboard</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+
+<body>
+    <nav>
+        <a href="{% url 'relationship_app:list_books' %}">Books</a> |
+        <a href="{% url 'relationship_app:logout' %}">Logout</a>
+    </nav>
+
+    <h1>Member Dashboard</h1>
+    <p>Welcome, {{ user.username }} ({{ user.profile.get_role_display }})!</p>
+
+    <h2>Member Privileges:</h2>
+    <ul>
+        <li>Browse and search books</li>
+        <li>Checkout available books</li>
+        <li>View borrowing history</li>
+        <li>Request book reservations</li>
+    </ul>
+
+    <h2>Quick Actions:</h2>
+    <ul>
+        <li><a href="{% url 'relationship_app:list_books' %}">Browse Books</a></li>
+        <li><a href="#">My Borrowed Books</a></li>
+        <li><a href="#">My Reservations</a></li>
+    </ul>
+</body>
+
+</html>
