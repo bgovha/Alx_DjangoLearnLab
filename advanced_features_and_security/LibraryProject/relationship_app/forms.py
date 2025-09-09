@@ -1,6 +1,20 @@
 from django import forms
 from .models import Book, Author
 
+# Injected imports and forms for CustomUser
+from django.contrib.auth.forms import UserCreationForm, UserChangeForm
+from .models import CustomUser
+
+class CustomUserCreationForm(UserCreationForm):
+    class Meta:
+        model = CustomUser
+        fields = ('email', 'first_name', 'last_name', 'date_of_birth')
+
+class CustomUserChangeForm(UserChangeForm):
+    class Meta:
+        model = CustomUser
+        fields = ('email', 'first_name', 'last_name', 'date_of_birth', 'profile_photo')
+
 class BookForm(forms.ModelForm):
     class Meta:
         model = Book
