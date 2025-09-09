@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+
+<body>
+    <nav>
+        <a href="{% url 'relationship_app:list_books' %}">Books</a> |
+        <a href="{% url 'relationship_app:logout' %}">Logout</a>
+    </nav>
+
+    <h1>Admin Dashboard</h1>
+    <p>Welcome, {{ user.username }} ({{ user.profile.get_role_display }})!</p>
+
+    <h2>Admin Privileges:</h2>
+    <ul>
+        <li>Manage all users and their roles</li>
+        <li>Access system settings</li>
+        <li>View audit logs</li>
+        <li>Manage library inventory</li>
+    </ul>
+
+    <h2>Quick Actions:</h2>
+    <ul>
+        <li><a href="#">User Management</a></li>
+        <li><a href="#">System Settings</a></li>
+        <li><a href="#">View Reports</a></li>
+    </ul>
+</body>
+
+</html>
