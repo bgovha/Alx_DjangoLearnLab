@@ -8,8 +8,7 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'relationship_app/static'),
 ]
 
-# Add to your existing settings
-AUTH_USER_MODEL = 'relationship_app.CustomUser'  # Replace 'relationship_app' with your actual app name
+AUTH_USER_MODEL = 'bookshelf.CustomUser'  # Use CustomUser from bookshelf app
 
 # Add media settings for profile photos
 MEDIA_URL = '/media/'
