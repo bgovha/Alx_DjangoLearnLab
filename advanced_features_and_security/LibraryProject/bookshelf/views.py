@@ -5,7 +5,7 @@ from django.http import HttpResponseBadRequest, JsonResponse
 from django.core.exceptions import ValidationError
 from django.utils.html import escape
 from .models import Book
-from .forms import BookForm
+from .forms import ExampleForm
 
 def safe_search(query):
     """
@@ -49,7 +49,7 @@ def book_create(request):
     Secure book creation with form validation and CSRF protection.
     """
     if request.method == 'POST':
-        form = BookForm(request.POST)
+        form = ExampleForm(request.POST)
         if form.is_valid():
             # Additional server-side validation
             book = form.save(commit=False)
@@ -63,7 +63,7 @@ def book_create(request):
                     for error in errors:
                         form.add_error(field, error)
     else:
-        form = BookForm()
+        form = ExampleForm()
     
     return render(request, 'bookshelf/form_example.html', {'form': form})
 
@@ -80,7 +80,7 @@ def book_update(request, pk):
         return HttpResponseBadRequest("You don't have permission to edit this book.")
     
     if request.method == 'POST':
-        form = BookForm(request.POST, instance=book)
+        form = ExampleForm(request.POST, instance=book)
         if form.is_valid():
             try:
                 form.instance.full_clean()
@@ -91,7 +91,7 @@ def book_update(request, pk):
                     for error in errors:
                         form.add_error(field, error)
     else:
-        form = BookForm(instance=book)
+        form = ExampleForm(instance=book)
     
     return render(request, 'bookshelf/form_example.html', {'form': form})
 
