@@ -1,76 +1,140 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required, permission_required
-from django.contrib import messages
-from django.http import HttpResponseForbidden
-from .models import Article
-from .forms import ArticleForm
+from django.db.models import Q
+from django.http import HttpResponseBadRequest, JsonResponse
+from django.core.exceptions import ValidationError
+from django.utils.html import escape
+from .models import Book
+from .forms import BookForm
+
+def safe_search(query):
+    """
+    Safe search function that prevents SQL injection by using Django's ORM
+    and properly escapes user input to prevent XSS.
+    """
+    if not query or not query.strip():
+        return Book.objects.none()
+    
+    # Escape user input to prevent XSS in search results display
+    safe_query = escape(query.strip())
+    
+    # Use Django's ORM with parameterized queries
+    return Book.objects.filter(
+        Q(title__icontains=safe_query) |
+        Q(author__icontains=safe_query) |
+        Q(isbn__iexact=safe_query)
+    )
 
 @login_required
-@permission_required('book_list.can_view', raise_exception=True)
-def article_list(request):
-    articles = Article.objects.all()
-    if not request.user.has_perm('book_list.can_publish'):
-        articles = articles.filter(is_published=True) | articles.filter(author=request.user)
-    return render(request, 'articles/list.html', {'articles': articles})
+def book_list(request):
+    """
+    Secure book listing with safe search functionality.
+    """
+    books = Book.objects.all()
+    search_query = request.GET.get('q', '')
+    
+    if search_query:
+        books = safe_search(search_query)
+    
+    context = {
+        'books': books,
+        'search_query': search_query,
+    }
+    return render(request, 'bookshelf/book_list.html', context)
 
 @login_required
-@permission_required('bookshelf.can_view', raise_exception=True)
-def article_detail(request, pk):
-    article = get_object_or_404(Article, pk=pk)
-    if not article.is_published and not request.user.has_perm('bookshelf.can_publish'):
-        return HttpResponseForbidden("You don't have permission to view unpublished articles.")
-    return render(request, 'articles/detail.html', {'article': article})
-
-@login_required
-@permission_required('bookshelf.can_create', raise_exception=True)
-def article_create(request):
+@permission_required('bookshelf.add_book', raise_exception=True)
+def book_create(request):
+    """
+    Secure book creation with form validation and CSRF protection.
+    """
     if request.method == 'POST':
-        form = ArticleForm(request.POST)
+        form = BookForm(request.POST)
         if form.is_valid():
-            article = form.save(commit=False)
-            article.author = request.user
-            article.save()
-            messages.success(request, 'Article created successfully!')
-            return redirect('article_list')
+            # Additional server-side validation
+            book = form.save(commit=False)
+            try:
+                book.full_clean()  # Run model validation
+                book.save()
+                return redirect('book_list')
+            except ValidationError as e:
+                # Add validation errors to form
+                for field, errors in e.error_dict.items():
+                    for error in errors:
+                        form.add_error(field, error)
     else:
-        form = ArticleForm()
-    return render(request, 'articles/form.html', {'form': form, 'title': 'Create Article'})
+        form = BookForm()
+    
+    return render(request, 'bookshelf/form_example.html', {'form': form})
 
 @login_required
-@permission_required('bookshelf.can_edit', raise_exception=True)
-def article_edit(request, pk):
-    article = get_object_or_404(Article, pk=pk)
-    # Additional check: users can only edit their own articles unless they have publish permission
-    if article.author != request.user and not request.user.has_perm('bookshelf.can_publish'):
-        return HttpResponseForbidden("You can only edit your own articles.")
+@permission_required('bookshelf.change_book', raise_exception=True)
+def book_update(request, pk):
+    """
+    Secure book update with proper authorization checks.
+    """
+    book = get_object_or_404(Book, pk=pk)
+    
+    # Additional authorization check (example: only owners can edit)
+    if not request.user.is_staff and book.owner != request.user:
+        return HttpResponseBadRequest("You don't have permission to edit this book.")
+    
     if request.method == 'POST':
-        form = ArticleForm(request.POST, instance=article)
+        form = BookForm(request.POST, instance=book)
         if form.is_valid():
-            form.save()
-            messages.success(request, 'Article updated successfully!')
-            return redirect('article_detail', pk=article.pk)
+            try:
+                form.instance.full_clean()
+                form.save()
+                return redirect('book_list')
+            except ValidationError as e:
+                for field, errors in e.error_dict.items():
+                    for error in errors:
+                        form.add_error(field, error)
     else:
-        form = ArticleForm(instance=article)
-    return render(request, 'articles/form.html', {'form': form, 'title': 'Edit Article'})
+        form = BookForm(instance=book)
+    
+    return render(request, 'bookshelf/form_example.html', {'form': form})
 
 @login_required
-@permission_required('bookshelf.can_delete', raise_exception=True)
-def article_delete(request, pk):
-    article = get_object_or_404(Article, pk=pk)
-    # Additional check: users can only delete their own articles unless they have publish permission
-    if article.author != request.user and not request.user.has_perm('bookshelf.can_publish'):
-        return HttpResponseForbidden("You can only delete your own articles.")
+@permission_required('bookshelf.delete_book', raise_exception=True)
+def book_delete(request, pk):
+    """
+    Secure book deletion with CSRF protection and authorization.
+    """
+    book = get_object_or_404(Book, pk=pk)
+    
+    if not request.user.is_staff and book.owner != request.user:
+        return HttpResponseBadRequest("You don't have permission to delete this book.")
+    
     if request.method == 'POST':
-        article.delete()
-        messages.success(request, 'Article deleted successfully!')
-        return redirect('article_list')
-    return render(request, 'articles/confirm_delete.html', {'article': article})
+        book.delete()
+        return redirect('book_list')
+    
+    return render(request, 'bookshelf/confirm_delete.html', {'book': book})
 
-@login_required
-@permission_required('bookshelf.can_publish', raise_exception=True)
-def article_publish(request, pk):
-    article = get_object_or_404(Article, pk=pk)
-    article.is_published = True
-    article.save()
-    messages.success(request, 'Article published successfully!')
-    return redirect('article_detail', pk=article.pk)
+def api_book_search(request):
+    """
+    Secure API endpoint for book search with input validation.
+    """
+    if not request.GET.get('q'):
+        return JsonResponse({'error': 'Query parameter "q" is required'}, status=400)
+    
+    query = request.GET.get('q', '')[:100]  # Limit query length
+    
+    if len(query) < 2:
+        return JsonResponse({'error': 'Query must be at least 2 characters long'}, status=400)
+    
+    books = safe_search(query)
+    
+    # Return safe data (no HTML, just strings)
+    results = [
+        {
+            'id': book.id,
+            'title': book.title,
+            'author': book.author,
+            'isbn': book.isbn
+        }
+        for book in books[:10]  # Limit results
+    ]
+    
+    return JsonResponse({'results': results})
