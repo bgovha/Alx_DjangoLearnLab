@@ -6,10 +6,10 @@ from .models import Article
 from .forms import ArticleForm
 
 @login_required
-@permission_required('bookshelf.can_view', raise_exception=True)
+@permission_required('book_list.can_view', raise_exception=True)
 def article_list(request):
     articles = Article.objects.all()
-    if not request.user.has_perm('bookshelf.can_publish'):
+    if not request.user.has_perm('book_list.can_publish'):
         articles = articles.filter(is_published=True) | articles.filter(author=request.user)
     return render(request, 'articles/list.html', {'articles': articles})
 
