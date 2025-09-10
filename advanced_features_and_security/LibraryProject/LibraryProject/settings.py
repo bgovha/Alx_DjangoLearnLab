@@ -89,6 +89,13 @@ if not DEBUG:
 
 SECURE_SSL_REDIRECT = not DEBUG
 
+# Explicitly include these security settings for clarity and enforcement
+SECURE_BROWSER_XSS_FILTER = True
+X_FRAME_OPTIONS = 'DENY'
+SECURE_CONTENT_TYPE_NOSNIFF = True
+CSRF_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_SECURE = not DEBUG
+
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
