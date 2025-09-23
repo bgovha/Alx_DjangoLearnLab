@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>List of Books</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+
+<body>
+    <div style="float: right;">
+        {% if user.is_authenticated %}
+        Welcome, {{ user.username }}! |
+        <a href="{% url 'relationship_app:logout' %}">Logout</a>
+        {% else %}
+        <a href="{% url 'relationship_app:login' %}">Login</a> |
+        <a href="{% url 'relationship_app:register' %}">Register</a>
+        {% endif %}
+    </div>
+
+    <h1>Books Available:</h1>
+    <ul>
+        {% for book in books %}
+        <li>{{ book.title }} by {{ book.author.name }}</li>
+        {% endfor %}
+    </ul>
+
+    <h2>Libraries:</h2>
+    <ul>
+        {% for library in libraries %}
+        <li><a href="{% url 'relationship_app:library_detail' library.pk %}">{{ library.name }}</a></li>
+        {% endfor %}
+    </ul>
+</body>
+
+</html>
