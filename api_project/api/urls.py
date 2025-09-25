@@ -1,7 +1,7 @@
 
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import BookList, BookViewSet
+from .views import BookList, BookViewSet, PublicBookList
 from . import views
 
 
@@ -10,9 +10,10 @@ router = DefaultRouter()
 router.register(r'books_all', BookViewSet, basename='book_all')
 
 urlpatterns = [
-    # Route for the BookList view (ListAPIView) - keeping the original endpoint
-    path('', views.api_overview, name='api-overview'),
+    # Public endpoint (no authentication required)
+    path('books/public/', PublicBookList.as_view(), name='book-list-public'),
+    # Protected endpoint (authentication required)
     path('books/', BookList.as_view(), name='book-list'),
-    # Include the router URLs for BookViewSet (all CRUD operations)
-    path('', include(router.urls)),  # This includes all routes registered with the router
+    # Include the router URLs for BookViewSet (with permissions)
+    path('', include(router.urls)),
 ]
