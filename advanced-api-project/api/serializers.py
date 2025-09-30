@@ -92,7 +92,7 @@ class AuthorSerializer(serializers.ModelSerializer):
         
         if include_books:
             books = obj.books.all()
-            serializer = BookSerializer(books, many=True, context=self.context)
+            serializer = BookSerializer(books, many=True, read_only=True, context=self.context)
             return serializer.data
         return None
     
