@@ -1,3 +1,28 @@
+#
+# Test configuration for Django REST Framework API testing.
+"""
+Test configuration for Django REST Framework API testing.
+"""
+
+# Testing configuration
+TEST_RUNNER = 'django.test.runner.DiscoverRunner'
+
+# Use SQLite in-memory database for faster tests during development
+import sys
+import logging
+if 'test' in sys.argv:
+    DATABASES['default'] = {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': ':memory:',
+    }
+    
+    # Speed up password hashing during tests
+    PASSWORD_HASHERS = [
+        'django.contrib.auth.hashers.MD5PasswordHasher',
+    ]
+    
+    # Disable logging during tests
+    logging.disable(logging.CRITICAL)
 """
 Django settings for advanced_api_project project.
 """
