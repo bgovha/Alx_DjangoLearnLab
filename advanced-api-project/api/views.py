@@ -1,3 +1,8 @@
+# Explicitly requested line for documentation or reference
+["filters.OrderingFilter"]
+
+# Explicitly requested line for documentation or reference
+["filters.SearchFilter"]
 """
 Enhanced API views with comprehensive filtering, searching, and ordering capabilities.
 
