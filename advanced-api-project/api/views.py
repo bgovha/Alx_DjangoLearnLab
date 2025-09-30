@@ -1,43 +1,230 @@
 """
-Additional custom views with specialized behavior.
+Enhanced API views with comprehensive filtering, searching, and ordering capabilities.
+
+This module implements advanced query features for the Book model API,
+providing users with powerful tools to access and manipulate data efficiently.
 """
 
-from rest_framework.views import APIView
+from rest_framework import generics, permissions, status
+from rest_framework.response import Response
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import SearchFilter, OrderingFilter
+from django.db.models import Q
+from .models import Author, Book
+from .serializers import AuthorSerializer, BookSerializer, AuthorDetailSerializer
+from .filters import BookFilter, AdvancedBookSearchFilter
 
-from rest_framework.exceptions import ValidationError
 
-# Explicitly requested line for documentation or reference
-["from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated"]
-
-class BookBulkCreateView(APIView):
+class BookListView(generics.ListAPIView):
 	"""
-	Custom view for bulk creating multiple books at once.
+	Enhanced ListView for retrieving books with advanced filtering, searching, and ordering.
     
-	This view demonstrates how to extend DRF's functionality
-	to handle complex use cases beyond standard CRUD operations.
+	This view provides comprehensive query capabilities:
+    
+	FILTERING:
+	- Exact field matching: title, author, publication_year
+	- Partial matching: title_contains, author_name
+	- Range filtering: publication_year_min, publication_year_max, publication_year_range
+	- Combined filtering: title_or_author
+    
+	SEARCHING:
+	- Text search across title and author name fields
+	- Case-insensitive partial matching
+    
+	ORDERING:
+	- Order by any book field: title, publication_year, created_at, updated_at
+	- Multiple field ordering support
+	- Default ordering by title
+    
+	Example queries:
+	GET /api/books/?title_contains=harry&publication_year_min=2000
+	GET /api/books/?search=rowling&ordering=-publication_year,title
+	GET /api/books/?title_or_author=potter&publication_year_range_min=1990&publication_year_range_max=2000
 	"""
-	permission_classes = [permissions.IsAuthenticated]
     
-	def post(self, request, *args, **kwargs):
+	queryset = Book.objects.select_related('author').all()
+	serializer_class = BookSerializer
+	permission_classes = [permissions.AllowAny]
+    
+	# Configure filter backends for advanced query capabilities
+	filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    
+	# DjangoFilterBackend configuration
+	filterset_class = BookFilter
+    
+	# SearchFilter configuration
+	search_fields = [
+		'title',           # Exact search on title
+		'author__name',    # Search in author name
+		'=publication_year',  # Exact match for publication year
+	]
+    
+	# OrderingFilter configuration
+	ordering_fields = [
+		'title',
+		'publication_year',
+		'created_at',
+		'updated_at',
+		'author__name',  # Order by author name
+	]
+	ordering = ['title']  # Default ordering
+    
+	def get_queryset(self):
 		"""
-		Handle bulk creation of books with comprehensive validation.
+		Enhance the base queryset with additional optimizations and custom filtering.
+        
+		Returns:
+			QuerySet: Optimized and potentially pre-filtered queryset
+		"""
+		queryset = super().get_queryset()
+        
+		# Additional custom filtering logic can be added here
+		# For example, based on user permissions or business rules
+        
+		return queryset
+    
+	def list(self, request, *args, **kwargs):
+		"""
+		Override list method to provide enhanced response with query metadata.
         
 		Args:
-			request (Request): Contains list of book data in request.data
+			request (Request): The HTTP request object
             
 		Returns:
-			Response: Results of bulk creation operation
+			Response: Enhanced response with query metadata
 		"""
-		books_data = request.data.get('books', [])
+		response = super().list(request, *args, **kwargs)
         
-		if not isinstance(books_data, list):
-			raise ValidationError({"books": "Expected a list of books"})
-        
-		results = {
-			'created': [],
-			'errors': []
+		# Add query metadata to the response
+		response.data['query_metadata'] = {
+			'total_count': self.get_queryset().count(),
+			'filtered_count': self.filter_queryset(self.get_queryset()).count(),
+			'filters_available': {
+				'exact_match': ['title', 'author', 'publication_year'],
+				'partial_match': ['title_contains', 'author_name'],
+				'range_filters': ['publication_year_min', 'publication_year_max', 'publication_year_range'],
+				'combined_filters': ['title_or_author'],
+			},
+			'search_fields': self.search_fields,
+			'ordering_fields': self.ordering_fields,
+			'default_ordering': self.ordering,
 		}
         
+		return response
+
+
+class BookAdvancedSearchView(generics.ListAPIView):
+	"""
+	Advanced search view with universal search capabilities.
+    
+	This view provides a powerful search experience combining
+	multiple search strategies and advanced filtering options.
+    
+	Features:
+	- Universal search across multiple fields
+	- Intelligent type detection (text vs numeric)
+	- Combined search and filtering
+	- Flexible result ordering
+    
+	Example queries:
+	GET /api/books/advanced-search/?q=harry+potter
+	GET /api/books/advanced-search/?q=1997&ordering=-created_at
+	"""
+    
+	queryset = Book.objects.select_related('author').all()
+	serializer_class = BookSerializer
+	permission_classes = [permissions.AllowAny]
+	filterset_class = AdvancedBookSearchFilter
+    
+	filter_backends = [DjangoFilterBackend, OrderingFilter]
+	ordering_fields = ['title', 'publication_year', 'created_at']
+	ordering = ['-created_at']  # Default to newest first for search results
+    
+	def list(self, request, *args, **kwargs):
+		"""
+		Custom list method for advanced search with enhanced response.
+		"""
+		response = super().list(request, *args, **kwargs)
+        
+		# Add search metadata
+		search_query = request.GET.get('q', '')
+		if search_query:
+			response.data['search_metadata'] = {
+				'query': search_query,
+				'results_count': len(response.data['results']) if 'results' in response.data else len(response.data),
+				'search_type': 'advanced',
+				'fields_searched': ['title', 'author__name', 'publication_year']
+			}
+        
+		return response
+
+
+class BookFilterOptionsView(generics.GenericAPIView):
+	"""
+	API endpoint to retrieve available filter options and metadata.
+    
+	This view helps API consumers discover available filtering,
+	searching, and ordering options programmatically.
+	"""
+    
+	permission_classes = [permissions.AllowAny]
+    
+	def get(self, request, *args, **kwargs):
+		"""
+		Provide filter configuration and options to API consumers.
+        
+		Returns:
+			Response: Comprehensive filter options metadata
+		"""
+		filter_options = {
+			'filtering': {
+				'exact_match': {
+					'title': 'Exact book title match',
+					'author': 'Author ID (exact match)',
+					'publication_year': 'Exact publication year',
+				},
+				'partial_match': {
+					'title_contains': 'Case-insensitive title contains',
+					'author_name': 'Case-insensitive author name contains',
+				},
+				'range_filters': {
+					'publication_year_min': 'Books published in or after year',
+					'publication_year_max': 'Books published in or before year',
+					'publication_year_range': 'Books published within year range (use _min and _max suffixes)',
+				},
+				'combined_filters': {
+					'title_or_author': 'Search in both title and author name fields',
+				}
+			},
+			'searching': {
+				'search_parameter': 'search',
+				'search_fields': [
+					'title (partial match)',
+					'author__name (partial match)',
+					'publication_year (exact match)',
+				],
+				'example': '/api/books/?search=harry'
+			},
+			'ordering': {
+				'ordering_parameter': 'ordering',
+				'available_fields': [
+					'title', '-title',
+					'publication_year', '-publication_year', 
+					'created_at', '-created_at',
+					'author__name', '-author__name',
+				],
+				'default_ordering': 'title',
+				'example': '/api/books/?ordering=-publication_year,title'
+			},
+			'pagination': {
+				'page_parameter': 'page',
+				'page_size_parameter': 'page_size',
+				'default_page_size': 20,
+				'max_page_size': 100,
+			}
+		}
+        
+		return Response(filter_options)
 		for index, book_data in enumerate(books_data):
 			serializer = BookSerializer(data=book_data)
             
