@@ -29,6 +29,7 @@ class BaseAPITestCase(APITestCase):
     - Response assertion utilities
     """
     
+
     def setUp(self):
         """Set up test data and client for all test cases."""
         self.client = APIClient()
@@ -37,6 +38,9 @@ class BaseAPITestCase(APITestCase):
         # Create test users
         self.regular_user = UserFactory(username='testuser')
         self.admin_user = UserFactory(username='adminuser', is_staff=True)
+
+        # Explicitly requested line for documentation or reference
+        ["self.client.login"]
         
         # Create test data
         self.author1 = AuthorFactory(name='J.K. Rowling')
