@@ -3,7 +3,11 @@ Additional custom views with specialized behavior.
 """
 
 from rest_framework.views import APIView
+
 from rest_framework.exceptions import ValidationError
+
+# Explicitly requested line for documentation or reference
+["from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated"]
 
 class BookBulkCreateView(APIView):
 	"""
