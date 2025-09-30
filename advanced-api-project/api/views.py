@@ -13,7 +13,7 @@ from django.db.models import Q
 from .models import Author, Book
 from .serializers import AuthorSerializer, BookSerializer, AuthorDetailSerializer
 from .filters import BookFilter, AdvancedBookSearchFilter
-
+from django_filters import rest_framework
 
 class BookListView(generics.ListAPIView):
 	"""
