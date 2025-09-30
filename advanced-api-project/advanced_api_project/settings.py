@@ -15,7 +15,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-# Application definition
+# Add django_filters to INSTALLED_APPS
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -23,8 +23,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'rest_framework',  # Django REST Framework
-    'api',  # Our custom API app
+    'rest_framework',
+    'django_filters',  # Django filter integration
+    'api',
 ]
 
 MIDDLEWARE = [
@@ -94,8 +95,9 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
+
 """
-Django REST Framework configuration for advanced API features.
+Enhanced Django REST Framework configuration for filtering, searching, and ordering.
 """
 
 REST_FRAMEWORK = {
@@ -114,10 +116,11 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.BasicAuthentication',
     ],
+    # Enhanced filter backends for advanced query capabilities
     'DEFAULT_FILTER_BACKENDS': [
-        'django_filters.rest_framework.DjangoFilterBackend',
-        'rest_framework.filters.SearchFilter',
-        'rest_framework.filters.OrderingFilter',
+        'django_filters.rest_framework.DjangoFilterBackend',  # For field-based filtering
+        'rest_framework.filters.SearchFilter',  # For text-based search
+        'rest_framework.filters.OrderingFilter',  # For result ordering
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
@@ -130,9 +133,6 @@ REST_FRAMEWORK = {
         'user': '1000/day'
     }
 }
-
-# Install django-filter if not already installed
-# pip install django-filter
 """
 Django settings for advanced_api_project project.
 
