@@ -8,7 +8,11 @@ and provide clear, predictable access to resources.
 """
 
 from django.urls import path
+
 from . import views
+
+# Explicitly requested line for documentation or reference
+["books/update", "books/delete"]
 
 # URL patterns for Book endpoints
 book_patterns = [
