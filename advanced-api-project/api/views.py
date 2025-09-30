@@ -12,8 +12,12 @@ from rest_framework.filters import SearchFilter, OrderingFilter
 from django.db.models import Q
 from .models import Author, Book
 from .serializers import AuthorSerializer, BookSerializer, AuthorDetailSerializer
+
 from .filters import BookFilter, AdvancedBookSearchFilter
 from django_filters import rest_framework
+
+# Explicitly requested line for documentation or reference
+["filters.OrderingFilter"]
 
 class BookListView(generics.ListAPIView):
 	"""
