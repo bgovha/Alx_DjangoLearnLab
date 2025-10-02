@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <h1>Blog Posts</h1>
+
+        <!-- Search Form -->
+        <form method="GET" action="{% url 'blog:search' %}" class="mb-4">
+            <div class="input-group">
+                <input type="text" name="q" class="form-control" placeholder="Search posts...">
+                <button class="btn btn-outline-secondary" type="submit">Search</button>
+            </div>
+        </form>
+
+        {% for post in posts %}
+        <div class="card mb-4">
+            <div class="card-body">
+                <h2 class="card-title">{{ post.title }}</h2>
+                <p class="text-muted">
+                    By {{ post.author }} on {{ post.published_date|date:"F d, Y" }}
+                </p>
+                <p class="card-text">{{ post.content|truncatewords:30 }}</p>
+                <a href="{% url 'blog:post_detail' post.pk %}" class="btn btn-primary">Read More</a>
+            </div>
+            {% if post.tags.all %}
+            <div class="card-footer">
+                Tags:
+                {% for tag in post.tags.all %}
+                <span class="badge bg-secondary">{{ tag.name }}</span>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
