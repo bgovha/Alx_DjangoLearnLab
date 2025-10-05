@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Blog Posts - Django Blog{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Main Content -->
+    <div class="col-lg-8">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="display-5">Latest Blog Posts</h1>
+            {% if user.is_authenticated %}
+                <a href="{% url 'blog:post_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> New Post
+                </a>
+            {% endif %}
+        </div>
+
+        <!-- Search and Filter -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <form method="GET" action="{% url 'blog:post_list' %}">
+                    <div class="input-group">
+                        <input type="text" name="q" class="form-control" 
+                               placeholder="Search posts..." value="{{ search_query }}">
+                        <button class="btn btn-outline-primary" type="submit">
+                            <i class="fas fa-search"></i> Search
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Posts List -->
+        {% if posts %}
+            {% for post in posts %}
+                <div class="card post-card mb-4">
+                    {% if post.image %}
+                        <img src="{{ post.image.url }}" class="card-img-top" alt="{{ post.title }}" style="height: 300px; object-fit: cover;">
+                    {% endif %}
+                    <div class="card-body">
+                        <h2 class="card-title">
+                            <a href="{% url 'blog:post_detail' post.pk %}" class="text-decoration-none text-dark">
+                                {{ post.title }}
+                            </a>
+                        </h2>
+                        
+                        <div class="post-meta text-muted mb-3">
+                            <small>
+                                <i class="fas fa-user"></i> 
+                                <a href="{% url 'blog:user_posts' post.author.username %}" class="text-decoration-none">
+                                    {{ post.author.get_full_name|default:post.author.username }}
+                                </a> 
+                                | <i class="fas fa-calendar"></i> {{ post.published_date|date:"F d, Y" }}
+                                | <i class="fas fa-eye"></i> {{ post.view_count }} views
+                                {% if post.tags.all %}
+                                    | <i class="fas fa-tags"></i>
+                                    {% for tag in post.tags.all %}
+                                        <a href="{% url 'blog:posts_by_tag' tag.name %}" class="badge bg-secondary text-decoration-none">
+                                            {{ tag.name }}
+                                        </a>
+                                    {% endfor %}
+                                {% endif %}
+                            </small>
+                        </div>
+                        
+                        {% if post.excerpt %}
+                            <p class="card-text lead">{{ post.excerpt }}</p>
+                        {% else %}
+                            <p class="card-text">{{ post.content|striptags|truncatewords:50 }}</p>
+                        {% endif %}
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a href="{% url 'blog:post_detail' post.pk %}" class="btn btn-primary">
+                                Read More <i class="fas fa-arrow-right"></i>
+                            </a>
+                            
+                            {% if user == post.author %}
+                                <div class="btn-group">
+                                    <a href="{% url 'blog:post_update' post.pk %}" class="btn btn-sm btn-outline-secondary">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
+                                    <a href="{% url 'blog:post_delete' post.pk %}" class="btn btn-sm btn-outline-danger">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </a>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+
+            <!-- Pagination -->
+            {% if is_paginated %}
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% if search_query %}&q={{ search_query }}{% endif %}">First</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}">Previous</a>
+                            </li>
+                        {% endif %}
+
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <li class="page-item active">
+                                    <a class="page-link" href="?page={{ num }}{% if search_query %}&q={{ search_query }}{% endif %}">{{ num }}</a>
+                                </li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}{% if search_query %}&q={{ search_query }}{% endif %}">{{ num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}">Next</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&q={{ search_query }}{% endif %}">Last</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% endif %}
+
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-blog fa-4x text-muted mb-3"></i>
+                <h3>No posts found</h3>
+                <p class="text-muted">
+                    {% if search_query %}
+                        No posts match your search criteria.
+                    {% else %}
+                        There are no published posts yet.
+                    {% endif %}
+                </p>
+                {% if user.is_authenticated %}
+                    <a href="{% url 'blog:post_create' %}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-plus"></i> Create First Post
+                    </a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-tags"></i> Popular Tags</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex flex-wrap gap-2">
+                    {% for tag in popular_tags %}
+                        <a href="{% url 'blog:posts_by_tag' tag.name %}" 
+                           class="badge bg-secondary text-decoration-none">
+                            {{ tag.name }} <span class="badge bg-light text-dark">{{ tag.post_count }}</span>
+                        </a>
+                    {% empty %}
+                        <p class="text-muted">No tags yet.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-info-circle"></i> Blog Stats</h5>
+            </div>
+            <div class="card-body">
+                <p class="mb-2">
+                    <i class="fas fa-file-alt text-primary"></i>
+                    <strong>{{ posts.count }}</strong> published posts
+                </p>
+                <p class="mb-0">
+                    <i class="fas fa-users text-success"></i>
+                    <strong>{{ view_count }}</strong> total views
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
