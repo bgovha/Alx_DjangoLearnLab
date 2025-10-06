@@ -1,10 +1,14 @@
-# Create your tests here.
+
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from django.urls import reverse
-from .models import Post, Tag
+from .models import Post, Comment
 
 class BlogCRUDTests(TestCase):
+    """Placeholder for Blog CRUD test cases."""
+    pass
+
+class CommentSystemTests(TestCase):
     def setUp(self):
         self.client = Client()
         self.user = User.objects.create_user(
@@ -17,14 +21,79 @@ class BlogCRUDTests(TestCase):
             email='other@example.com',
             password='otherpass123'
         )
-        self.tag = Tag.objects.create(name='Django')
         self.post = Post.objects.create(
             title='Test Post',
-            content='This is a test post content.',
+            content='Test content',
             author=self.user,
             status='published'
         )
-        self.post.tags.add(self.tag)
+
+    def test_comment_creation(self):
+        self.client.login(username='testuser', password='testpass123')
+        response = self.client.post(reverse('blog:add_comment', args=[self.post.pk]), {
+            'content': 'This is a test comment.'
+        })
+        self.assertEqual(response.status_code, 302)  # Redirect after success
+        self.assertTrue(Comment.objects.filter(content='This is a test comment.').exists())
+
+    def test_comment_edit_author(self):
+        comment = Comment.objects.create(
+            post=self.post,
+            author=self.user,
+            content='Original comment'
+        )
+        self.client.login(username='testuser', password='testpass123')
+        response = self.client.post(reverse('blog:edit_comment', args=[comment.pk]), {
+            'content': 'Updated comment content'
+        })
+        self.assertEqual(response.status_code, 302)
+        comment.refresh_from_db()
+        self.assertEqual(comment.content, 'Updated comment content')
+
+    def test_comment_edit_non_author(self):
+        comment = Comment.objects.create(
+            post=self.post,
+            author=self.user,
+            content='Original comment'
+        )
+        self.client.login(username='otheruser', password='otherpass123')
+        response = self.client.get(reverse('blog:edit_comment', args=[comment.pk]))
+        self.assertEqual(response.status_code, 403)  # Forbidden
+
+    def test_comment_deletion(self):
+        comment = Comment.objects.create(
+            post=self.post,
+            author=self.user,
+            content='Comment to delete'
+        )
+        self.client.login(username='testuser', password='testpass123')
+        response = self.client.post(reverse('blog:delete_comment', args=[comment.pk]))
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(Comment.objects.filter(pk=comment.pk).exists())
+
+    def test_comment_like_functionality(self):
+        comment = Comment.objects.create(
+            post=self.post,
+            author=self.user,
+            content='Test comment'
+        )
+        self.client.login(username='testuser', password='testpass123')
+        response = self.client.post(reverse('blog:comment_like_toggle', args=[comment.pk]))
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(comment.user_has_liked(self.user))
+
+    def test_comment_reply(self):
+        parent_comment = Comment.objects.create(
+            post=self.post,
+            author=self.user,
+            content='Parent comment'
+        )
+        self.client.login(username='otheruser', password='otherpass123')
+        response = self.client.post(reverse('blog:add_comment_reply', args=[self.post.pk, parent_comment.pk]), {
+            'content': 'This is a reply'
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(Comment.objects.filter(parent=parent_comment, content='This is a reply').exists())
 
     def test_post_list_view(self):
         response = self.client.get(reverse('blog:post_list'))
