@@ -1,3 +1,10 @@
+class TagWidget(forms.TextInput):
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault('attrs', {}).update({
+            'class': 'form-control tag-widget',
+            'placeholder': 'Enter tag name...'
+        })
+        super().__init__(*args, **kwargs)
 from django import forms
 from .models import Post, Comment, Tag
 
@@ -120,8 +127,5 @@ class TagForm(forms.ModelForm):
         model = Tag
         fields = ['name']
         widgets = {
-            'name': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Enter tag name...'
-            })
+            'name': TagWidget(),
         }
