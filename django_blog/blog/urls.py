@@ -1,3 +1,5 @@
+    path('comment/<int:pk>/update/', CommentUpdateView.as_view(), name='update_comment'),
+    path('post/<int:pk>/comments/new/', CommentCreateView.as_view(), name='new_post_comment'),
 from django.urls import path
 from . import views
 from .views import (
