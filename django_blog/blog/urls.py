@@ -1,5 +1,3 @@
-    path('comment/<int:pk>/update/', CommentUpdateView.as_view(), name='update_comment'),
-    path('post/<int:pk>/comments/new/', CommentCreateView.as_view(), name='new_post_comment'),
 from django.urls import path
 from . import views
 from .views import (
@@ -37,12 +35,14 @@ urlpatterns = [
     
     # Comment URLs (existing)
     path('post/<int:post_pk>/comment/', CommentCreateView.as_view(), name='add_comment'),
+    # Comment URLs (existing)
+    path('post/<int:post_pk>/comment/', CommentCreateView.as_view(), name='add_comment'),
     path('post/<int:post_pk>/comment/<int:parent_pk>/reply/', views.add_comment_reply, name='add_comment_reply'),
     path('comment/<int:pk>/edit/', CommentUpdateView.as_view(), name='edit_comment'),
     path('comment/<int:pk>/delete/', CommentDeleteView.as_view(), name='delete_comment'),
     path('comment/<int:pk>/like/', views.comment_like_toggle, name='comment_like_toggle'),
     path('comments/', views.CommentListView.as_view(), name='comment_list'),
-    
-    # Tag management
+    path('comment/<int:pk>/update/', CommentUpdateView.as_view(), name='update_comment'),
+    path('post/<int:pk>/comments/new/', CommentCreateView.as_view(), name='new_post_comment'),
     path('post/<int:pk>/manage-tags/', views.manage_post_tags, name='manage_post_tags'),
 ]
