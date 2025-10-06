@@ -70,20 +70,71 @@ class Post(models.Model):
         return self.status == 'published' and self.published_date <= timezone.now()
 
 class Comment(models.Model):
-    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='comments')
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
-    content = models.TextField()
-    created_date = models.DateTimeField(auto_now_add=True)
-    updated_date = models.DateTimeField(auto_now=True)
+    post = models.ForeignKey(
+        'Post', 
+        on_delete=models.CASCADE, 
+        related_name='comments'
+    )
+    author = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE, 
+        related_name='comments'
+    )
+    content = models.TextField(max_length=1000)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     approved = models.BooleanField(default=True)
-    parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies')
+    parent = models.ForeignKey(
+        'self', 
+        on_delete=models.CASCADE, 
+        null=True, 
+        blank=True, 
+        related_name='replies'
+    )
+    likes = models.ManyToManyField(
+        User, 
+        related_name='comment_likes', 
+        blank=True
+    )
     
     class Meta:
-        ordering = ['-created_date']
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['post', 'created_at']),
+            models.Index(fields=['approved']),
+        ]
+        verbose_name = 'Comment'
+        verbose_name_plural = 'Comments'
     
     def __str__(self):
-        return f'Comment by {self.author} on {self.post}'
+        return f'Comment by {self.author.username} on {self.post.title}'
+    
+    def get_absolute_url(self):
+        return reverse('blog:post_detail', kwargs={'pk': self.post.pk}) + f'#comment-{self.pk}'
     
     @property
     def is_reply(self):
+        """Check if this comment is a reply to another comment"""
         return self.parent is not None
+    
+    @property
+    def reply_count(self):
+        """Get the number of replies to this comment"""
+        return self.replies.count()
+    
+    @property
+    def like_count(self):
+        """Get the number of likes for this comment"""
+        return self.likes.count()
+    
+    def user_has_liked(self, user):
+        """Check if a user has liked this comment"""
+        return self.likes.filter(id=user.id).exists()
+    
+    def can_edit(self, user):
+        """Check if user can edit this comment"""
+        return user == self.author or user.is_staff
+    
+    def can_delete(self, user):
+        """Check if user can delete this comment"""
+        return user == self.author or user == self.post.author or user.is_staff
