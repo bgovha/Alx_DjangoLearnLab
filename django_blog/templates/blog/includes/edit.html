@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Edit Comment - Django Blog{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h4 class="mb-0"><i class="fas fa-edit"></i> Edit Comment</h4>
+            </div>
+            <div class="card-body">
+                <!-- Original Comment Preview -->
+                <div class="card bg-light mb-4">
+                    <div class="card-body">
+                        <h6>Original Comment:</h6>
+                        <p class="mb-0 text-muted">{{ object.content|linebreaksbr }}</p>
+                        <small class="text-muted">
+                            Posted on {{ object.created_at|date:"F d, Y at H:i" }}
+                        </small>
+                    </div>
+                </div>
+
+                <!-- Edit Form -->
+                <form method="POST">
+                    {% csrf_token %}
+                    {{ form|crispy }}
+
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-warning">
+                            <i class="fas fa-save"></i> Update Comment
+                        </button>
+                        <a href="{{ object.get_absolute_url }}" class="btn btn-outline-secondary ms-2">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

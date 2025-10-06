@@ -1,0 +1,141 @@
+<div class="comment mb-4" id="comment-{{ comment.id }}">
+    <div class="card">
+        <div class="card-body">
+            <!-- Comment Header -->
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div class="d-flex align-items-center">
+                    <img src="{{ comment.author.profile.profile_picture.url }}" alt="{{ comment.author.username }}"
+                        class="rounded-circle me-2" width="40" height="40"
+                        onerror="this.src='https://via.placeholder.com/40'">
+                    <div>
+                        <h6 class="mb-0">
+                            {{ comment.author.get_full_name|default:comment.author.username }}
+                            {% if comment.author == comment.post.author %}
+                            <span class="badge bg-primary ms-1">Author</span>
+                            {% endif %}
+                        </h6>
+                        <small class="text-muted">
+                            <i class="fas fa-clock"></i> {{ comment.created_at|timesince }} ago
+                            {% if comment.updated_at != comment.created_at %}
+                            <span class="ms-2" title="Edited">
+                                <i class="fas fa-edit"></i> edited
+                            </span>
+                            {% endif %}
+                        </small>
+                    </div>
+                </div>
+
+                <!-- Comment Actions -->
+                {% if user.is_authenticated %}
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
+                        data-bs-toggle="dropdown">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    <ul class="dropdown-menu">
+                        {% if comment.can_edit user %}
+                        <li>
+                            <a class="dropdown-item" href="{% url 'blog:edit_comment' comment.pk %}">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% if comment.can_delete user %}
+                        <li>
+                            <a class="dropdown-item text-danger" href="{% url 'blog:delete_comment' comment.pk %}"
+                                onclick="return confirm('Are you sure you want to delete this comment?')">
+                                <i class="fas fa-trash"></i> Delete
+                            </a>
+                        </li>
+                        {% endif %}
+                        <li>
+                            <button class="dropdown-item reply-btn" data-comment-id="{{ comment.id }}"
+                                data-author-name="{{ comment.author.username }}">
+                                <i class="fas fa-reply"></i> Reply
+                            </button>
+                        </li>
+                        <li>
+                            <button class="dropdown-item like-btn" data-comment-id="{{ comment.id }}"
+                                data-liked="{% if comment.user_has_liked user %}true{% else %}false{% endif %}">
+                                <i class="fas fa-thumbs-up"></i>
+                                <span class="like-text">
+                                    {% if comment.user_has_liked user %}Unlike{% else %}Like{% endif %}
+                                </span>
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Comment Content -->
+            <div class="comment-content mb-3">
+                <p class="mb-0">{{ comment.content|linebreaksbr }}</p>
+            </div>
+
+            <!-- Comment Footer -->
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-3">
+                    <!-- Like Button -->
+                    {% if user.is_authenticated %}
+                    <button class="btn btn-sm btn-outline-primary like-btn" data-comment-id="{{ comment.id }}"
+                        data-liked="{% if comment.user_has_liked user %}true{% else %}false{% endif %}">
+                        <i class="fas fa-thumbs-up"></i>
+                        <span class="like-count">{{ comment.like_count }}</span>
+                    </button>
+                    {% else %}
+                    <span class="btn btn-sm btn-outline-secondary disabled">
+                        <i class="fas fa-thumbs-up"></i>
+                        <span class="like-count">{{ comment.like_count }}</span>
+                    </span>
+                    {% endif %}
+
+                    <!-- Reply Button -->
+                    {% if user.is_authenticated %}
+                    <button class="btn btn-sm btn-outline-secondary reply-btn" data-comment-id="{{ comment.id }}"
+                        data-author-name="{{ comment.author.username }}">
+                        <i class="fas fa-reply"></i> Reply
+                        {% if comment.reply_count > 0 %}
+                        <span class="badge bg-light text-dark ms-1">{{ comment.reply_count }}</span>
+                        {% endif %}
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Reply Form (Hidden by default) -->
+            <div class="reply-form mt-3" id="reply-form-{{ comment.id }}" style="display: none;">
+                <form method="POST" action="{% url 'blog:add_comment_reply' post.pk comment.pk %}"
+                    class="reply-comment-form">
+                    {% csrf_token %}
+                    <div class="mb-2">
+                        <textarea name="content" class="form-control" rows="3" placeholder="Write your reply..."
+                            maxlength="1000"></textarea>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">
+                            <span class="char-count">0</span>/1000 characters
+                        </small>
+                        <div>
+                            <button type="button" class="btn btn-sm btn-outline-secondary cancel-reply">
+                                Cancel
+                            </button>
+                            <button type="submit" class="btn btn-sm btn-primary">
+                                Post Reply
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Replies -->
+            {% if comment.replies.all %}
+            <div class="replies mt-3 ms-4 ps-3 border-start">
+                {% for reply in comment.replies.all %}
+                {% include 'blog/includes/comment_item.html' with comment=reply %}
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
