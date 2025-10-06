@@ -5,7 +5,8 @@ from .views import (
     PostUpdateView, PostDeleteView, UserPostListView,
     CommentCreateView, CommentUpdateView, CommentDeleteView,
     TagListView, TagDetailView, TagCreateView, TagUpdateView, TagDeleteView,
-    SearchView, AutocompleteView
+    SearchView, AutocompleteView,
+    PostByTagListView
 )
 
 app_name = 'blog'
@@ -25,7 +26,8 @@ urlpatterns = [
     path('tags/<slug:slug>/', TagDetailView.as_view(), name='tag_detail'),
     path('tags/<slug:slug>/update/', TagUpdateView.as_view(), name='tag_update'),
     path('tags/<slug:slug>/delete/', TagDeleteView.as_view(), name='tag_delete'),
-    path('tag/<str:tag_slug>/', PostListView.as_view(), name='posts_by_tag'),
+    path('tag/<str:tag_slug>/', PostByTagListView.as_view(), name='posts_by_tag'),
+    path('tags/<slug:tag_slug>/', PostByTagListView.as_view(), name='posts_by_tag_slug'),
     
     # Search URLs
     path('search/', SearchView.as_view(), name='search'),
