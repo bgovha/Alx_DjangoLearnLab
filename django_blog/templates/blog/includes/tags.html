@@ -1,0 +1,40 @@
+<!-- Tags Display -->
+{% if post.tags.all %}
+<div class="tags-section mb-4">
+    <h6 class="mb-2">
+        <i class="fas fa-tags"></i> Tags
+    </h6>
+    <div class="d-flex flex-wrap gap-2">
+        {% for tag in post.tags.all %}
+        <a href="{% url 'blog:posts_by_tag' tag.slug %}" class="badge text-decoration-none tag-badge"
+            style="background-color: {{ tag.color }}; color: white;" data-bs-toggle="tooltip"
+            title="{{ tag.description|default:tag.name }}">
+            {{ tag.name }}
+            {% if tag.post_count > 0 %}
+            <span class="badge bg-light text-dark ms-1">{{ tag.post_count }}</span>
+            {% endif %}
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Tag Cloud -->
+{% if popular_tags %}
+<div class="tag-cloud mb-4">
+    <h6 class="mb-3">
+        <i class="fas fa-cloud"></i> Popular Tags
+    </h6>
+    <div class="d-flex flex-wrap gap-2">
+        {% for tag in popular_tags %}
+        {% with size=tag.post_count|add:"10" %}
+        <a href="{% url 'blog:posts_by_tag' tag.slug %}" class="badge text-decoration-none tag-cloud-item"
+            style="background-color: {{ tag.color }}; color: white; font-size: {{ size }}px;" data-bs-toggle="tooltip"
+            title="{{ tag.post_count }} posts">
+            {{ tag.name }}
+        </a>
+        {% endwith %}
+        {% endfor %}
+    </div>
+</div>
+{% endif %}

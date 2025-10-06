@@ -1,0 +1,88 @@
+<!-- Advanced Search Form -->
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="fas fa-search"></i> Advanced Search</h5>
+    </div>
+    <div class="card-body">
+        <form method="GET" action="{% url 'blog:search' %}" class="search-form">
+            <!-- Search Query -->
+            <div class="mb-3">
+                <label for="id_q" class="form-label">Search Query</label>
+                <input type="text" name="q" id="id_q" class="form-control" value="{{ search_form.q.value|default:'' }}"
+                    placeholder="Enter keywords...">
+            </div>
+
+            <!-- Search In -->
+            <div class="mb-3">
+                <label class="form-label">Search In</label>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="search_in" id="search_all" value="all" {% if
+                        search_form.search_in.value=='all' or not search_form.search_in.value %}checked{% endif %}>
+                    <label class="form-check-label" for="search_all">All Content</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="search_in" id="search_title" value="title" {% if
+                        search_form.search_in.value=='title' %}checked{% endif %}>
+                    <label class="form-check-label" for="search_title">Titles Only</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="search_in" id="search_content" value="content" {%
+                        if search_form.search_in.value=='content' %}checked{% endif %}>
+                    <label class="form-check-label" for="search_content">Content Only</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="search_in" id="search_tags" value="tags" {% if
+                        search_form.search_in.value=='tags' %}checked{% endif %}>
+                    <label class="form-check-label" for="search_tags">Tags Only</label>
+                </div>
+            </div>
+
+            <!-- Tag Filter -->
+            <div class="mb-3">
+                <label class="form-label">Filter by Tags</label>
+                <div class="tag-filter" style="max-height: 150px; overflow-y: auto;">
+                    {% for tag in popular_tags %}
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="tags" value="{{ tag.id }}"
+                            id="tag_{{ tag.id }}" {% if tag.id in search_form.tags.value %}checked{% endif %}>
+                        <label class="form-check-label" for="tag_{{ tag.id }}">
+                            <span class="badge" style="background-color: {{ tag.color }}">{{ tag.name }}</span>
+                            <small class="text-muted">({{ tag.post_count }})</small>
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Date Range -->
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="id_date_from" class="form-label">From Date</label>
+                    <input type="date" name="date_from" id="id_date_from" class="form-control"
+                        value="{{ search_form.date_from.value|default:'' }}">
+                </div>
+                <div class="col-md-6">
+                    <label for="id_date_to" class="form-label">To Date</label>
+                    <input type="date" name="date_to" id="id_date_to" class="form-control"
+                        value="{{ search_form.date_to.value|default:'' }}">
+                </div>
+            </div>
+
+            <!-- Sort By -->
+            <div class="mb-3">
+                <label for="id_sort_by" class="form-label">Sort By</label>
+                <select name="sort_by" id="id_sort_by" class="form-select">
+                    {% for value, label in search_form.SORT_CHOICES %}
+                    <option value="{{ value }}" {% if search_form.sort_by.value==value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">
+                <i class="fas fa-search"></i> Search
+            </button>
+        </form>
+    </div>
+</div>

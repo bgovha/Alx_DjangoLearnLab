@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block title %}Tags - Django Blog{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="display-5">
+                <i class="fas fa-tags"></i> All Tags
+            </h1>
+            <div class="btn-group">
+                <a href="?popularity=popular"
+                    class="btn btn-outline-primary {% if request.GET.popularity == 'popular' %}active{% endif %}">
+                    Popular
+                </a>
+                <a href="?popularity=unused"
+                    class="btn btn-outline-secondary {% if request.GET.popularity == 'unused' %}active{% endif %}">
+                    Unused
+                </a>
+                <a href="{% url 'blog:tag_list' %}" class="btn btn-outline-info">
+                    All
+                </a>
+            </div>
+        </div>
+
+        <!-- Tags Stats -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-4">
+                        <h3 class="text-primary">{{ total_tags }}</h3>
+                        <p class="text-muted mb-0">Total Tags</p>
+                    </div>
+                    <div class="col-md-4">
+                        <h3 class="text-success">{{ popular_tags|length }}</h3>
+                        <p class="text-muted mb-0">Popular Tags</p>
+                    </div>
+                    <div class="col-md-4">
+                        <h3 class="text-info">{% widthratio popular_tags|length total_tags 100 %}%</h3>
+                        <p class="text-muted mb-0">Usage Rate</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tags Grid -->
+        <div class="row">
+            {% for tag in tags %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100 tag-card">
+                    <div class="card-header" style="background-color: {{ tag.color }}; color: white;">
+                        <h5 class="mb-0">
+                            <i class="fas fa-tag"></i> {{ tag.name }}
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if tag.description %}
+                        <p class="card-text">{{ tag.description }}</p>
+                        {% endif %}
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="badge bg-primary">{{ tag.post_count }} post{{ tag.post_count|pluralize
+                                }}</span>
+                            <small class="text-muted">Created {{ tag.created_date|timesince }} ago</small>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-transparent">
+                        <a href="{% url 'blog:posts_by_tag' tag.slug %}" class="btn btn-sm btn-outline-primary w-100">
+                            View Posts
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12 text-center py-5">
+                <i class="fas fa-tags fa-3x text-muted mb-3"></i>
+                <h3 class="text-muted">No tags found</h3>
+                <p class="text-muted">No tags match your current filter.</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <nav aria-label="Tags pagination">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link"
+                        href="?page=1{% if request.GET.popularity %}&popularity={{ request.GET.popularity }}{% endif %}">First</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link"
+                        href="?page={{ page_obj.previous_page_number }}{% if request.GET.popularity %}&popularity={{ request.GET.popularity }}{% endif %}">Previous</a>
+                </li>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                <li class="page-item active">
+                    <a class="page-link"
+                        href="?page={{ num }}{% if request.GET.popularity %}&popularity={{ request.GET.popularity }}{% endif %}">{{
+                        num }}</a>
+                </li>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %} <li class="page-item">
+                    <a class="page-link"
+                        href="?page={{ num }}{% if request.GET.popularity %}&popularity={{ request.GET.popularity }}{% endif %}">{{
+                        num }}</a>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link"
+                            href="?page={{ page_obj.next_page_number }}{% if request.GET.popularity %}&popularity={{ request.GET.popularity }}{% endif %}">Next</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link"
+                            href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.popularity %}&popularity={{ request.GET.popularity }}{% endif %}">Last</a>
+                    </li>
+                    {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

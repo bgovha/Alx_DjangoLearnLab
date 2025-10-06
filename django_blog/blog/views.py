@@ -3,10 +3,11 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.views.generic import (
-    ListView, DetailView, CreateView, UpdateView, DeleteView, View
+    ListView, DetailView, CreateView, UpdateView, DeleteView, View, TemplateView
 )
 from django.urls import reverse_lazy
 from django.db.models import Q, Count
+from django.db.models import F, Value, IntegerField
 from django.utils import timezone
 from .models import Post, Comment, Tag
 from django.contrib.auth.models import User
@@ -51,6 +52,7 @@ class PostListView(ListView):
         context['search_query'] = self.request.GET.get('q', '')
         return context
 
+
 class PostDetailView(DetailView):
     model = Post
     template_name = 'blog/post_detail.html'
@@ -77,6 +79,7 @@ class PostDetailView(DetailView):
         context['top_level_comments'] = comments
         
         return context
+
 
 class CommentCreateView(LoginRequiredMixin, CreateView):
     model = Comment
@@ -111,6 +114,7 @@ class CommentCreateView(LoginRequiredMixin, CreateView):
             return JsonResponse({
                 'success': False,
                 'errors': form.errors
+
             }, status=400)
         
         messages.error(self.request, 'There was an error with your comment.')
@@ -121,6 +125,7 @@ class CommentUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     form_class = CommentEditForm
     template_name = 'blog/comment_edit.html'
     
+
     def form_valid(self, form):
         form.instance.updated_at = timezone.now()
         response = super().form_valid(form)
@@ -136,6 +141,7 @@ class CommentUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         messages.success(self.request, 'Your comment has been updated!')
         return response
     
+
     def test_func(self):
         comment = self.get_object()
         return comment.can_edit(self.request.user)
@@ -149,6 +155,7 @@ class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     
     def test_func(self):
         comment = self.get_object()
+
         return comment.can_delete(self.request.user)
     
     def delete(self, request, *args, **kwargs):
@@ -241,6 +248,7 @@ def add_comment_reply(request, post_pk, parent_pk):
         else:
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
                 return JsonResponse({
+
                     'success': False,
                     'errors': form.errors
                 }, status=400)
@@ -262,6 +270,7 @@ def add_comment_reply(request, post_pk, parent_pk):
             tags__in=post_tags_ids,
             status='published',
             published_date__lte=timezone.now()
+
         ).exclude(id=self.object.id)
         similar_posts = similar_posts.annotate(
             same_tags=Count('tags')

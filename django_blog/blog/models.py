@@ -3,16 +3,51 @@ from django.contrib.auth.models import User
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.text import slugify
+from django.core.validators import MinLengthValidator
+import uuid
 
 class Tag(models.Model):
-    name = models.CharField(max_length=50, unique=True)
+    name = models.CharField(
+        max_length=50, 
+        unique=True,
+        validators=[MinLengthValidator(2)]
+    )
+    slug = models.SlugField(max_length=50, unique=True, blank=True)
+    description = models.TextField(max_length=200, blank=True)
+    color = models.CharField(max_length=7, default='#6c757d')  # Hex color code
     created_date = models.DateTimeField(auto_now_add=True)
+    updated_date = models.DateTimeField(auto_now=True)
+    post_count = models.PositiveIntegerField(default=0)
+    
+    class Meta:
+        ordering = ['name']
+        indexes = [
+            models.Index(fields=['name']),
+            models.Index(fields=['slug']),
+        ]
+        verbose_name = 'Tag'
+        verbose_name_plural = 'Tags'
     
     def __str__(self):
         return self.name
     
-    class Meta:
-        ordering = ['name']
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
+    
+    def get_absolute_url(self):
+        return reverse('blog:posts_by_tag', kwargs={'tag_slug': self.slug})
+    
+    def update_post_count(self):
+        """Update the post count for this tag"""
+        self.post_count = self.posts.count()
+        self.save(update_fields=['post_count'])
+    
+    @property
+    def is_popular(self):
+        """Check if tag is popular (more than 5 posts)"""
+        return self.post_count > 5
 
 class Post(models.Model):
     STATUS_CHOICES = (
@@ -32,12 +67,14 @@ class Post(models.Model):
     image = models.ImageField(upload_to='blog_images/', null=True, blank=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='draft')
     view_count = models.PositiveIntegerField(default=0)
+    search_vector = models.SearchVectorField(null=True, blank=True)  # For full-text search
     
     class Meta:
         ordering = ['-published_date']
         indexes = [
             models.Index(fields=['-published_date']),
             models.Index(fields=['status']),
+            models.Index(fields=['slug']),
         ]
     
     def __str__(self):
@@ -57,6 +94,10 @@ class Post(models.Model):
             self.excerpt = self.content[:297] + "..." if len(self.content) > 300 else self.content
             
         super().save(*args, **kwargs)
+        
+        # Update tag counts
+        for tag in self.tags.all():
+            tag.update_post_count()
     
     def get_absolute_url(self):
         return reverse('blog:post_detail', kwargs={'pk': self.pk})
@@ -68,6 +109,24 @@ class Post(models.Model):
     @property
     def is_published(self):
         return self.status == 'published' and self.published_date <= timezone.now()
+    
+    def get_related_posts(self):
+        """Get posts with similar tags"""
+        return Post.objects.filter(
+            tags__in=self.tags.all(),
+            status='published',
+            published_date__lte=timezone.now()
+        ).exclude(id=self.id).distinct()[:4]
+
+# Signal to update tag counts when posts are saved
+from django.db.models.signals import m2m_changed
+from django.dispatch import receiver
+
+@receiver(m2m_changed, sender=Post.tags.through)
+def update_tag_count(sender, instance, action, **kwargs):
+    if action in ['post_add', 'post_remove', 'post_clear']:
+        for tag in instance.tags.all():
+            tag.update_post_count()
 
 class Comment(models.Model):
     post = models.ForeignKey(
@@ -81,7 +140,7 @@ class Comment(models.Model):
         related_name='comments'
     )
     content = models.TextField(max_length=1000)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
     approved = models.BooleanField(default=True)
     parent = models.ForeignKey(
