@@ -1,14 +1,16 @@
 from django.shortcuts import render
-from rest_framework import viewsets, permissions, filters
+from rest_framework import viewsets, permissions, filters, generics
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
+from django.contrib.auth import get_user_model
 from .models import Post, Comment
 from .serializers import (
     PostSerializer, 
     PostCreateUpdateSerializer,
     CommentSerializer
 )
+User = get_user_model()
 
 class IsAuthorOrReadOnly(permissions.BasePermission):
     """
@@ -73,3 +75,21 @@ class CommentViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         """Automatically set author to logged-in user"""
         serializer.save(author=self.request.user)
+        
+class FeedView(generics.ListAPIView):
+    """
+    GET /api/feed/
+    Returns posts from users that the current user follows
+    """
+    serializer_class = PostSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_queryset(self):
+        # Get users that current user follows
+        following_users = self.request.user.following.all()
+        
+        # Get posts from those users, ordered by newest first
+        return Post.objects.filter(
+            author__in=following_users
+        ).order_by('-created_at')
+        
