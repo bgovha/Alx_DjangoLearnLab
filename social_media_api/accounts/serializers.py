@@ -1,5 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
+from rest_framework.authtoken.models import Token
+
 
 User = get_user_model()  # Gets your CustomUser model
 
@@ -34,3 +36,6 @@ class UserSerializer(serializers.ModelSerializer):
     
     def get_following_count(self, obj):
         return obj.following.count()
+    
+    
+    '''serializers.CharField()", "Token.objects.create", "get_user_model().objects.create_user'''
