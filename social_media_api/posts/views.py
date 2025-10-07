@@ -93,3 +93,21 @@ class FeedView(generics.ListAPIView):
             author__in=following_users
         ).order_by('-created_at')
         
+class FeedView(generics.ListAPIView):
+    serializer_class = PostSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [filters.OrderingFilter]
+    ordering_fields = ['created_at', 'title']
+    ordering = ['-created_at']  # Default: newest first
+    
+    def get_queryset(self):
+        following_users = self.request.user.following.all()
+        
+        queryset = Post.objects.filter(
+            author__in=following_users
+        ).select_related('author').prefetch_related(
+            'comments',
+            'comments__author'
+        )
+        
+        return queryset

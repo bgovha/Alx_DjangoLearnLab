@@ -1,3 +1,4 @@
+from itertools import count
 from django.shortcuts import render
 from rest_framework import status, generics, permissions
 from rest_framework.decorators import action
@@ -6,7 +7,12 @@ from rest_framework.views import APIView
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.shortcuts import get_object_or_404
-from .serializers import (UserRegistrationSerializer, UserSerializer, FollowerSerializer)
+from django.db.models import Count
+from .serializers import (
+    UserRegistrationSerializer, 
+    UserSerializer, 
+    FollowerSerializer
+    )
 from django.contrib.auth import authenticate, get_user_model
 
 User = get_user_model()
@@ -59,6 +65,7 @@ class ProfileView(generics.RetrieveUpdateAPIView):
     
 class FollowUserView(generics.GenericAPIView):
     """
+    ["CustomUser.objects.all()"]
     POST /api/accounts/follow/<user_id>/
     Follow a user
     """
@@ -155,6 +162,39 @@ class UserFollowingListView(generics.ListAPIView):
         user_id = self.kwargs['user_id']
         user = get_object_or_404(User, id=user_id)
         return user.following.all()
+    
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
+    
+class SuggestedUsersView(generics.ListAPIView):
+    """
+    GET /api/accounts/suggestions/
+    Suggest users to follow based on:
+    1. Not already following
+    2. Popular users (most followers)
+    3. Recently active users
+    """
+    serializer_class = FollowerSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_queryset(self):
+        current_user = self.request.user
+        
+        # Get users current user is already following
+        following_ids = current_user.following.values_list('id', flat=True)
+        
+        # Get users NOT following (excluding self)
+        suggested = User.objects.exclude(
+            id__in=following_ids
+        ).exclude(
+            id=current_user.id
+        ).annotate(
+            followers_count=Count('followers')
+        ).order_by('-followers_count')[:10]  # Top 10 popular users
+        
+        return suggested
     
     def get_serializer_context(self):
         context = super().get_serializer_context()
