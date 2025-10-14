@@ -23,6 +23,6 @@ urlpatterns = [
     path('<int:user_id>/followers/', UserFollowersListView.as_view(), name='user-followers'),
     path('<int:user_id>/following/', UserFollowingListView.as_view(), name='user-following'),
 
-    # Suggested users to follow
+    # Suggest users to follow
     path('suggestions/', SuggestedUsersView.as_view(), name='suggested-users'),
 ]

@@ -78,6 +78,7 @@ class CommentViewSet(viewsets.ModelViewSet):
         
 class FeedView(generics.ListAPIView):
     """
+    "Post.objects.filter(author__in=following_users).order_by"
     GET /api/feed/
     Returns posts from users that the current user follows
     """
