@@ -48,3 +48,5 @@ class Comment(models.Model):
     
     def __str__(self):
         return f"Comment by {self.author.username} on {self.post.title}"
+    
+    #["Like"]
