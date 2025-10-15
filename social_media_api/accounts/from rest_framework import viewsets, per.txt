@@ -1,0 +1,29 @@
+from rest_framework import viewsets, permissions
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Post, Like  # Assuming Like is in the same app, adjust import if necessary
+from .serializers import PostSerializer  # Adjust import based on your project structure
+
+class PostViewSet(viewsets.ModelViewSet):
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def like(self, request, pk=None):
+        post = self.get_object()
+        user = request.user
+        like, created = Like.objects.get_or_create(user=user, post=post)
+        if not created:
+            return Response({'detail': 'Already liked'}, status=status.HTTP_400_BAD_REQUEST)
+        # Create notification here
+        # ... notification logic ...
+        return Response({'detail': 'Post liked'}, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def unlike(self, request, pk=None):
+        post = self.get_object()
+        user = request.user
+        Like.objects.filter(user=user, post=post).delete()
+        return Response({'detail': 'Post unliked'}, status=status.HTTP_200_OK)
