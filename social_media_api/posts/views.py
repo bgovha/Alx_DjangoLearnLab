@@ -112,3 +112,5 @@ class FeedView(generics.ListAPIView):
         )
         
         return queryset
+    
+    #"generics.get_object_or_404(Post, pk=pk)", "Like.objects.get_or_create(user=request.user, post=post)", "Notification.objects.create"]
