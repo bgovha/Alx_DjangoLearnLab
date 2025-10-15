@@ -11,3 +11,6 @@ urlpatterns = [
     path('', include(router.urls)),
     path('feed/', FeedView.as_view(), name='feed'),  # Add feed endpoint
 ]
+
+
+#posts/urls.py doesn't contain: ["<int:pk>/like/", "<int:pk>/unlike/"]
